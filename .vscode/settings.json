@@ -1,0 +1,7 @@
+{
+    "idf.currentSetup": "/Users/sc/.espressif/v5.4.4/esp-idf",
+    "C_Cpp.default.compileCommands": "${workspaceFolder}/build/compile_commands.json",
+    "clangd.arguments": [
+        "--compile-commands-dir=${workspaceFolder}/build"
+    ]
+}

@@ -1,0 +1,11 @@
+# ESP-IDF build artifacts
+build/
+sdkconfig.old
+
+# ESP-IDF managed dependencies cache
+managed_components/
+dependencies.lock.*
+
+# Editor and local cache files
+.cache/
+.DS_Store
