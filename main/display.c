@@ -191,3 +191,81 @@ void display_lvgl_test_run(void)
     ESP_ERROR_CHECK(display_init());
     lvgl_hello_world();
 }
+
+/* --- Sensor display --- */
+
+static lv_obj_t *sensor_temp_label = NULL;
+static lv_obj_t *sensor_hum_label = NULL;
+
+void display_update_sensor(int temperature, int humidity)
+{
+    if (!sensor_temp_label || !sensor_hum_label) {
+        return;
+    }
+
+    lvgl_port_lock(0);
+    lv_label_set_text_fmt(sensor_temp_label, "Temperature: %dC", temperature);
+    lv_label_set_text_fmt(sensor_hum_label, "Humidity: %d%%", humidity);
+    lvgl_port_unlock();
+}
+
+static void lvgl_sensor_ui(void)
+{
+    const lvgl_port_cfg_t lvgl_cfg = ESP_LVGL_PORT_INIT_CONFIG();
+    ESP_ERROR_CHECK(lvgl_port_init(&lvgl_cfg));
+
+    const lvgl_port_display_cfg_t disp_cfg = {
+        .io_handle = io_handle,
+        .panel_handle = panel_handle,
+        .buffer_size = DISPLAY_WIDTH * 50,
+        .double_buffer = true,
+        .hres = DISPLAY_WIDTH,
+        .vres = DISPLAY_HEIGHT,
+        .monochrome = false,
+        .rotation = {
+            .swap_xy = false,
+            .mirror_x = false,
+            .mirror_y = false,
+        },
+        .flags = {
+            .buff_dma = true,
+        }
+    };
+    lvgl_disp = lvgl_port_add_disp(&disp_cfg);
+    lv_disp_set_rotation(lvgl_disp, LV_DISP_ROT_270);
+
+    lvgl_port_lock(0);
+    lv_obj_t *scr = lv_scr_act();
+
+    /* Black background */
+    static lv_style_t style_bg;
+    lv_style_init(&style_bg);
+    lv_style_set_bg_color(&style_bg, lv_color_hex(0x000000));
+    lv_style_set_bg_opa(&style_bg, LV_OPA_COVER);
+    lv_obj_add_style(scr, &style_bg, LV_STATE_DEFAULT);
+
+    /* Temperature label */
+    sensor_temp_label = lv_label_create(scr);
+    lv_obj_set_style_text_font(sensor_temp_label, &lv_font_unscii_8, 0);
+    lv_obj_set_style_text_color(sensor_temp_label, lv_color_white(), 0);
+    lv_label_set_text(sensor_temp_label, "Temperature: --C");
+    lv_obj_align(sensor_temp_label, LV_ALIGN_TOP_LEFT, 0, 5);
+
+    /* Humidity label */
+    sensor_hum_label = lv_label_create(scr);
+    lv_obj_set_style_text_font(sensor_hum_label, &lv_font_unscii_8, 0);
+    lv_obj_set_style_text_color(sensor_hum_label, lv_color_white(), 0);
+    lv_label_set_text(sensor_hum_label, "Humidity: --%");
+    lv_obj_align(sensor_hum_label, LV_ALIGN_TOP_LEFT, 0, 20);
+
+    lvgl_port_unlock();
+
+    ESP_LOGI(TAG, "LVGL sensor UI initialized");
+}
+
+void display_sensor_run(void)
+{
+    ESP_LOGI(TAG, "initializing sensor display...");
+    ESP_ERROR_CHECK(display_init());
+    lvgl_sensor_ui();
+}

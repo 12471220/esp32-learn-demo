@@ -55,6 +55,8 @@ void dht_task(void *pvParameters)
                 led_off(beep_gpio);
                 led_on(GREEN_LED);
             }
+
+            display_update_sensor(temperature, humidity);
         } else {
             ESP_LOGE(TAG, "Could not read data from sensor");
             alarm_start();
@@ -73,7 +75,6 @@ void app_main(void)
     led_init(RED_LED);
     led_init(beep_gpio);
 
-    // xTaskCreate(dht_task, "dht_task", configMINIMAL_STACK_SIZE * 3, NULL, 5, NULL);
-    // display_test_run();
-    display_lvgl_test_run();
+    display_sensor_run();
+    xTaskCreate(dht_task, "dht_task", configMINIMAL_STACK_SIZE * 3, NULL, 5, NULL);
 }

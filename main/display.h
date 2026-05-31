@@ -16,8 +16,8 @@ extern "C" {
 #define DISPLAY_BL       GPIO_NUM_21
 
 // --- Display parameters ---
-#define DISPLAY_WIDTH   128 
-#define DISPLAY_HEIGHT  128
+#define DISPLAY_WIDTH   130
+#define DISPLAY_HEIGHT  130
 
 // --- RGB565 color helper ---
 #define RGB565(r, g, b)  ((((r) & 0xF8) << 8) | (((g) & 0xFC) << 3) | ((b) >> 3))
@@ -58,6 +58,8 @@ esp_err_t display_draw_bitmap(int x, int y, int w, int h, const uint16_t *data);
 
 void display_test_run(void);
 void display_lvgl_test_run(void);
+void display_update_sensor(int temperature, int humidity);
+void display_sensor_run(void);
 
 #ifdef __cplusplus
 }
