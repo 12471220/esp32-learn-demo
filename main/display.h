@@ -56,7 +56,8 @@ esp_err_t display_fill(uint16_t color);
  */
 esp_err_t display_draw_bitmap(int x, int y, int w, int h, const uint16_t *data);
 
-void display_test_run();
+void display_test_run(void);
+void display_lvgl_test_run(void);
 
 #ifdef __cplusplus
 }

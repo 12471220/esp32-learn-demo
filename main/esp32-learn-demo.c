@@ -46,7 +46,7 @@ void dht_task(void *pvParameters)
             temperature /= 10;
             ESP_LOGI(TAG, "Humidity: %d%% Temp: %dC", humidity, temperature);
 
-            if (temperature > 30 || humidity > 65) {
+            if (temperature > 32 || humidity > 65) {
                 alarm_start();
                 led_on(beep_gpio);
                 led_off(GREEN_LED);
@@ -74,5 +74,6 @@ void app_main(void)
     led_init(beep_gpio);
 
     // xTaskCreate(dht_task, "dht_task", configMINIMAL_STACK_SIZE * 3, NULL, 5, NULL);
-    display_test_run();
+    // display_test_run();
+    display_lvgl_test_run();
 }

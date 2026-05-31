@@ -7,6 +7,8 @@
 #include "esp_lcd_panel_ops.h"
 #include "esp_lcd_st7735.h"
 #include "esp_log.h"
+#include "esp_lvgl_port.h"
+#include "lvgl.h"
 
 static const char *TAG = "display";
 
@@ -63,7 +65,6 @@ esp_err_t display_init(void)
     // --- Init sequence ---
     ESP_RETURN_ON_ERROR(esp_lcd_panel_reset(panel_handle), TAG, "panel reset failed");
     ESP_RETURN_ON_ERROR(esp_lcd_panel_init(panel_handle), TAG, "panel init failed");
-    ESP_RETURN_ON_ERROR(esp_lcd_panel_invert_color(panel_handle, true), TAG, "invert failed");
     ESP_RETURN_ON_ERROR(esp_lcd_panel_disp_on_off(panel_handle, true), TAG, "disp on failed");
 
     gpio_set_level(DISPLAY_BL, 1);
@@ -117,9 +118,11 @@ esp_err_t display_draw_bitmap(int x, int y, int w, int h, const uint16_t *data)
 }
 
 
-void display_test_run() {
+void display_test_run(void)
+{
     ESP_LOGI(TAG, "initializing display...");
     ESP_ERROR_CHECK(display_init());
+    ESP_ERROR_CHECK(esp_lcd_panel_invert_color(panel_handle, true));
 
     // Cycle through primary colors
     while (1) {
@@ -135,4 +138,56 @@ void display_test_run() {
         ESP_ERROR_CHECK(display_fill(COLOR_BLUE));
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
+}
+
+static lv_disp_t *lvgl_disp = NULL;
+
+static void lvgl_hello_world(void)
+{
+    const lvgl_port_cfg_t lvgl_cfg = ESP_LVGL_PORT_INIT_CONFIG();
+    ESP_ERROR_CHECK(lvgl_port_init(&lvgl_cfg));
+
+    const lvgl_port_display_cfg_t disp_cfg = {
+        .io_handle = io_handle,
+        .panel_handle = panel_handle,
+        .buffer_size = DISPLAY_WIDTH * 50,
+        .double_buffer = true,
+        .hres = DISPLAY_WIDTH,
+        .vres = DISPLAY_HEIGHT,
+        .monochrome = false,
+        .rotation = {
+            .swap_xy = false,
+            .mirror_x = false,
+            .mirror_y = false,
+        },
+        .flags = {
+            .buff_dma = true,
+        }
+    };
+
+    lvgl_disp = lvgl_port_add_disp(&disp_cfg);
+    lv_disp_set_rotation(lvgl_disp, LV_DISP_ROT_270);
+
+    lvgl_port_lock(0);
+    lv_obj_t *scr = lv_scr_act();
+    lv_obj_t *label = lv_label_create(scr);
+    lv_label_set_text(label, "Hello World");
+    lv_obj_set_style_text_color(label, lv_color_white(), 0);
+    lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
+    lvgl_port_unlock();
+
+    static lv_style_t style_bg;
+    lv_style_init(&style_bg);
+    lv_style_set_bg_color(&style_bg, lv_color_hex(0x000000)); 
+    lv_style_set_bg_opa(&style_bg, LV_OPA_COVER);
+    lv_obj_add_style(scr, &style_bg, LV_STATE_DEFAULT);
+
+    ESP_LOGI(TAG, "LVGL hello world displayed");
+}
+
+void display_lvgl_test_run(void)
+{
+    ESP_LOGI(TAG, "initializing display with LVGL...");
+    ESP_ERROR_CHECK(display_init());
+    lvgl_hello_world();
 }

@@ -16,3 +16,4 @@ dependencies:
   #   public: true
   waveshare/esp_lcd_st7735: '*'
   esp-idf-lib/dht: '*'
+  espressif/esp_lvgl_port: '*'
