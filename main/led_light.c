@@ -29,7 +29,6 @@ esp_err_t led_off(gpio_num_t gpio_num)
 esp_err_t led_toggle(gpio_num_t gpio_num)
 {
     int level = gpio_get_level(gpio_num);
-    ESP_LOGI("[INFO]", "Current LED level: %d", level);
     return gpio_set_level(gpio_num, !level);
 }
 
@@ -39,39 +38,61 @@ esp_err_t led_blink(gpio_num_t gpio_num, int duration_ms, int count)
         esp_err_t err = led_on(gpio_num);
         if (err != ESP_OK) return err;
         vTaskDelay(pdMS_TO_TICKS(duration_ms));
-        ESP_LOGI("[INFO]", "LED%d open %d/%d", gpio_num, i + 1, count);
+        ESP_LOGD("led_light", "[DEBUG] LED%d open %d/%d", gpio_num, i + 1, count);
 
         err = led_off(gpio_num);
         if (err != ESP_OK) return err;
         vTaskDelay(pdMS_TO_TICKS(duration_ms));
-        ESP_LOGI("[INFO]", "LED%d close %d/%d", gpio_num, i + 1, count);
+        ESP_LOGD("led_light", "[DEBUG] LED%d close %d/%d", gpio_num, i + 1, count);
     }
     return ESP_OK;
 }
 
+// task1 test
 void toggle_led1(void *pvParameters) {
     while(1) {
-        led_blink(LED1_GPIO, 300, 1);
+        led_blink(RED_LED, 1000, 1);
     }
 }
 
+// task2 test
 void toggle_led2(void *pvParameters) {
     while(1) {
-        led_blink(LED2_GPIO, 400, 1);
+        led_blink(GREEN_LED, 400, 1);
+    }
+}
+
+void three_color_led_blink() {
+    if(led_init(RED_LED) != ESP_OK) {
+        ESP_LOGE("led_light", "[ERROR] Failed to initialize RED_LED");
+        return;
+    }
+    if(led_init(GREEN_LED) != ESP_OK) {
+        ESP_LOGE("led_light", "[ERROR] Failed to initialize GREEN_LED");
+        return;
+    }
+    if(led_init(BLUE_LED) != ESP_OK) {
+        ESP_LOGE("led_light", "[ERROR] Failed to initialize BLUE_LED");
+        return;
+    }
+    while(1) {
+        led_blink(RED_LED, 1000, 2);
+        led_blink(GREEN_LED, 2000, 2);
+        led_blink(BLUE_LED, 3000, 2);
     }
 }
 
 void led_demo_run() {
-    ESP_LOGI("[INFO]", "Demo run!");
+    ESP_LOGI("led_light", "[INFO] Demo run!");
 
-    esp_err_t err1 = led_init(LED1_GPIO);
+    esp_err_t err1 = led_init(RED_LED);
     if (err1 != ESP_OK) {
-        ESP_LOGE("[ERROR]", "LED1 init failed: %s", esp_err_to_name(err1));
+        ESP_LOGE("led_light", "[ERROR] RED_LED init failed: %s", esp_err_to_name(err1));
         return;
     }
-    esp_err_t err2 = led_init(LED2_GPIO);
+    esp_err_t err2 = led_init(BLUE_LED);
     if (err2 != ESP_OK) {
-        ESP_LOGE("[ERROR]", "LED2 init failed: %s", esp_err_to_name(err2));
+        ESP_LOGE("led_light", "[ERROR] BLUE_LED init failed: %s", esp_err_to_name(err2));
         return;
     }
     xTaskCreatePinnedToCore(
@@ -84,5 +105,5 @@ void led_demo_run() {
         0               // Core 0
     );
     xTaskCreatePinnedToCore(toggle_led2, "led_task2", 2048, NULL, 5, NULL, 1);
-    ESP_LOGI("[INFO]", "LED demo done.");
+    ESP_LOGI("led_light", "[INFO] LED demo done.");
 }
