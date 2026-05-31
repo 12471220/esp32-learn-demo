@@ -1,7 +1,15 @@
 {
-    "idf.currentSetup": "/Users/sc/.espressif/v5.4.4/esp-idf",
-    "C_Cpp.default.compileCommands": "${workspaceFolder}/build/compile_commands.json",
-    "clangd.arguments": [
-        "--compile-commands-dir=${workspaceFolder}/build"
-    ]
+  "idf.currentSetup": "/Users/sc/.espressif/v5.4.4/esp-idf",
+  "C_Cpp.default.compileCommands": "${workspaceFolder}/build/compile_commands.json",
+  "clangd.arguments": [
+    "--background-index",
+    "--query-driver=**",
+    "--compile-commands-dir=/Users/sc/repos/hobbies/esp32-learn-demo/build"
+  ],
+  "idf.flashType": "UART",
+  "idf.customExtraVars": {
+    "IDF_TARGET": "esp32"
+  },
+  "clangd.path": "/Users/sc/.espressif/tools/esp-clang/esp-18.1.2_20240912/esp-clang/bin/clangd",
+  "idf.port": "/dev/tty.usbserial-A5069RR4",
 }
