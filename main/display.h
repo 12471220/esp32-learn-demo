@@ -39,6 +39,13 @@ extern "C" {
 esp_err_t display_init(void);
 
 /**
+ * @brief Set display backlight brightness via PWM.
+ * @param percent Brightness 0-100.
+ * @return ESP_OK on success, otherwise an error code.
+ */
+esp_err_t display_set_brightness(uint8_t percent);
+
+/**
  * @brief Fill the entire screen with a single color.
  * @param color 16-bit RGB565 color value.
  * @return ESP_OK on success, otherwise an error code.

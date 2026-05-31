@@ -1,6 +1,7 @@
 #include "display.h"
 
 #include "driver/gpio.h"
+#include "driver/ledc.h"
 #include "driver/spi_master.h"
 #include "esp_check.h"
 #include "esp_lcd_panel_io.h"
@@ -17,16 +18,25 @@ static esp_lcd_panel_io_handle_t io_handle = NULL;
 
 esp_err_t display_init(void)
 {
-    // --- Backlight ---
-    gpio_config_t bl_conf = {
-        .pin_bit_mask = 1ULL << DISPLAY_BL,
-        .mode = GPIO_MODE_OUTPUT,
-        .pull_up_en = GPIO_PULLUP_DISABLE,
-        .pull_down_en = GPIO_PULLDOWN_DISABLE,
-        .intr_type = GPIO_INTR_DISABLE,
+    // --- Backlight PWM ---
+    const ledc_timer_config_t ledc_timer = {
+        .speed_mode = LEDC_LOW_SPEED_MODE,
+        .duty_resolution = LEDC_TIMER_13_BIT,
+        .timer_num = LEDC_TIMER_0,
+        .freq_hz = 5000,
+        .clk_cfg = LEDC_AUTO_CLK,
     };
-    gpio_config(&bl_conf);
-    gpio_set_level(DISPLAY_BL, 0);
+    ESP_RETURN_ON_ERROR(ledc_timer_config(&ledc_timer), TAG, "ledc timer config failed");
+
+    const ledc_channel_config_t ledc_channel = {
+        .gpio_num = DISPLAY_BL,
+        .speed_mode = LEDC_LOW_SPEED_MODE,
+        .channel = LEDC_CHANNEL_0,
+        .timer_sel = LEDC_TIMER_0,
+        .duty = 0,
+        .hpoint = 0,
+    };
+    ESP_RETURN_ON_ERROR(ledc_channel_config(&ledc_channel), TAG, "ledc channel config failed");
 
     // --- SPI bus ---
     const spi_bus_config_t bus_cfg = {
@@ -67,10 +77,21 @@ esp_err_t display_init(void)
     ESP_RETURN_ON_ERROR(esp_lcd_panel_init(panel_handle), TAG, "panel init failed");
     ESP_RETURN_ON_ERROR(esp_lcd_panel_disp_on_off(panel_handle, true), TAG, "disp on failed");
 
-    gpio_set_level(DISPLAY_BL, 1);
+    display_set_brightness(10);
 
     ESP_LOGI(TAG, "initialized (%dx%d)", DISPLAY_WIDTH, DISPLAY_HEIGHT);
     return ESP_OK;
+}
+
+esp_err_t display_set_brightness(uint8_t percent)
+{
+    if (percent > 100) {
+        percent = 100;
+    }
+    uint32_t duty = (8191 * percent) / 100;
+    ESP_RETURN_ON_ERROR(ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, duty),
+                        TAG, "set duty failed");
+    return ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0);
 }
 
 esp_err_t display_fill(uint16_t color)
