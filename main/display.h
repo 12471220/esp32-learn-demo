@@ -8,16 +8,16 @@ extern "C" {
 #endif
 
 // --- Pin definitions (change to match your wiring) ---
-#define DISPLAY_SCLK     GPIO_NUM_18
-#define DISPLAY_MOSI     GPIO_NUM_23
-#define DISPLAY_CS       GPIO_NUM_5
-#define DISPLAY_DC       GPIO_NUM_4
-#define DISPLAY_RST      GPIO_NUM_22
+#define DISPLAY_SCLK     GPIO_NUM_18 // SPI Clock
+#define DISPLAY_MOSI     GPIO_NUM_23 // SDA, SPI data line
+#define DISPLAY_RST      GPIO_NUM_22 // Reset
+#define DISPLAY_DC       GPIO_NUM_32
+#define DISPLAY_CS       GPIO_NUM_33
 #define DISPLAY_BL       GPIO_NUM_21
 
 // --- Display parameters ---
-#define DISPLAY_WIDTH    128
-#define DISPLAY_HEIGHT   160
+#define DISPLAY_WIDTH   128 
+#define DISPLAY_HEIGHT  128
 
 // --- RGB565 color helper ---
 #define RGB565(r, g, b)  ((((r) & 0xF8) << 8) | (((g) & 0xFC) << 3) | ((b) >> 3))
@@ -55,6 +55,8 @@ esp_err_t display_fill(uint16_t color);
  * @return ESP_OK on success, otherwise an error code.
  */
 esp_err_t display_draw_bitmap(int x, int y, int w, int h, const uint16_t *data);
+
+void display_test_run();
 
 #ifdef __cplusplus
 }
