@@ -44,91 +44,55 @@ static void http_server_start(void)
     }
 }
 
-/* --- RSSI polling --- */
-struct chain_unit {
-    int rssi;
-    struct chain_unit *next;
-    struct chain_unit *prev;
-};
-struct wifi_rssi_history {
-    struct chain_unit *pile; // not head
-    struct chain_unit *tail;
-    int max_size;
+/* --- RSSI ring buffer with cached sum --- */
+struct wifi_rssi_ring {
+    int *buf;
+    int head;      // next write position
     int count;
+    int sum;       // cached sum
+    int max_size;
 };
-struct wifi_rssi_history *init_rssi_queue() {
-    struct wifi_rssi_history *history = malloc(sizeof(struct wifi_rssi_history));
-    history->pile = NULL;
-    history->tail = NULL;
-    history->count = 0;
-    struct chain_unit *pile = malloc(sizeof(struct chain_unit));
-    pile->next=NULL;
-    pile->prev=NULL;
-    history->pile = pile;
-    history->tail = NULL;
-    history->max_size = 50;
-    return history;
+
+static struct wifi_rssi_ring *rssi_ring_init(int max_size)
+{
+    struct wifi_rssi_ring *ring = malloc(sizeof(struct wifi_rssi_ring));
+    ring->buf = malloc(max_size * sizeof(int));
+    ring->head = 0;
+    ring->count = 0;
+    ring->sum = 0;
+    ring->max_size = max_size;
+    return ring;
 }
-void enqueue_rssi(struct wifi_rssi_history *history, int rssi) {
-    if (history->count == history->max_size) {
-        return;
+
+static void rssi_ring_add(struct wifi_rssi_ring *ring, int rssi)
+{
+    if (ring->count == ring->max_size) {
+        // evict oldest: position (head - count) wrapped
+        int oldest_idx = (ring->head - ring->count + ring->max_size) % ring->max_size;
+        ring->sum -= ring->buf[oldest_idx];
+        ring->count--;
     }
-    struct chain_unit *new_unit = malloc(sizeof(struct chain_unit));
-    if (history->count == 0) {
-        history->tail = new_unit;
-        history->pile->next = new_unit;
-    } else {
-        history->tail->next = new_unit;
-        new_unit->prev = history->tail;
-        history->tail = new_unit;
-    }
-    new_unit->rssi = rssi;
-    new_unit->next = NULL;
-    history->count++;
+    ring->buf[ring->head] = rssi;
+    ring->sum += rssi;
+    ring->head = (ring->head + 1) % ring->max_size;
+    ring->count++;
 }
-void dequeue_rssi(struct wifi_rssi_history *history) {
-    if (history->count == 0) {
-        return;
-    }
-    if (history->count-1 == 0) {
-        free(history->tail);
-        history->tail = NULL;
-        history->pile->next = NULL;
-    } else {
-        struct chain_unit *new_head = history->pile->next->next;
-        free(history->pile->next);
-        history->pile->next = new_head;
-        new_head->prev = NULL;
-    }
-    history->count--;
-}
-/**
- * Calculate the average RSSI, update the queue
- */
-int calculate_average_rssi(struct wifi_rssi_history *history, int new_rssi) {
-    int sum = 0;
-    if (history->count == history->max_size) {
-        dequeue_rssi(history);
-    }
-    enqueue_rssi(history, new_rssi);
-    struct chain_unit *current = history->pile->next;
-    while (current != NULL) {
-        sum += current->rssi;
-        current = current->next;
-    }
-    return sum / history->count;
+
+static int rssi_ring_avg(const struct wifi_rssi_ring *ring)
+{
+    if (ring->count == 0) return 0;
+    return ring->sum / ring->count;
 }
 
 static void wifi_poll_task(void *pvParameters)
 {
-    // init rssi history queue
-    struct wifi_rssi_history *history = init_rssi_queue();
+    struct wifi_rssi_ring *ring = rssi_ring_init(50);
     while (1) {
         if (wifi_connected) {
             wifi_ap_record_t ap_info;
             if (esp_wifi_sta_get_ap_info(&ap_info) == ESP_OK) {
-                int avg=calculate_average_rssi(history, ap_info.rssi);
-                display_update_wifi(avg, wifi_ip_str);
+                rssi_ring_add(ring, ap_info.rssi);
+                display_update_wifi(rssi_ring_avg(ring), wifi_ip_str);
             }
         } else {
             display_update_wifi(0, NULL);
