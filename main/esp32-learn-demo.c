@@ -7,6 +7,7 @@
 #include <dht.h>
 #include "display.h"
 #include "wifi_manager.h"
+#include "servo.h"
 
 #define SENSOR_TYPE    DHT_TYPE_DHT11
 #define DHT_GPIO       GPIO_NUM_4
@@ -70,7 +71,7 @@ void dht_task(void *pvParameters)
 
 void app_main(void)
 {
-    esp_log_level_set("*", ESP_LOG_INFO);
+    esp_log_level_set("*", ESP_LOG_WARN);
 
     led_init(GREEN_LED);
     led_init(RED_LED);

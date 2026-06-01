@@ -16,12 +16,12 @@ static char wifi_ip_str[16] = {0};
 static bool wifi_connected = false;
 
 /* --- HTTP server --- */
-
 static esp_err_t http_handler(httpd_req_t *req)
 {
     ESP_LOGI(TAG, "HTTP request: %s %s", http_method_str(req->method), req->uri);
-    const char *resp = "OK";
+    const char *resp = "OK\n";
     httpd_resp_send(req, resp, strlen(resp));
+    ESP_LOGI(TAG, "HTTP response responded.");
     return ESP_OK;
 }
 
@@ -45,14 +45,90 @@ static void http_server_start(void)
 }
 
 /* --- RSSI polling --- */
+struct chain_unit {
+    int rssi;
+    struct chain_unit *next;
+    struct chain_unit *prev;
+};
+struct wifi_rssi_history {
+    struct chain_unit *pile; // not head
+    struct chain_unit *tail;
+    int max_size;
+    int count;
+};
+struct wifi_rssi_history *init_rssi_queue() {
+    struct wifi_rssi_history *history = malloc(sizeof(struct wifi_rssi_history));
+    history->pile = NULL;
+    history->tail = NULL;
+    history->count = 0;
+    struct chain_unit *pile = malloc(sizeof(struct chain_unit));
+    pile->next=NULL;
+    pile->prev=NULL;
+    history->pile = pile;
+    history->tail = NULL;
+    history->max_size = 50;
+    return history;
+}
+void enqueue_rssi(struct wifi_rssi_history *history, int rssi) {
+    if (history->count == history->max_size) {
+        return;
+    }
+    struct chain_unit *new_unit = malloc(sizeof(struct chain_unit));
+    if (history->count == 0) {
+        history->tail = new_unit;
+        history->pile->next = new_unit;
+    } else {
+        history->tail->next = new_unit;
+        new_unit->prev = history->tail;
+        history->tail = new_unit;
+    }
+    new_unit->rssi = rssi;
+    new_unit->next = NULL;
+    history->count++;
+}
+void dequeue_rssi(struct wifi_rssi_history *history) {
+    if (history->count == 0) {
+        return;
+    }
+    if (history->count-1 == 0) {
+        free(history->tail);
+        history->tail = NULL;
+        history->pile->next = NULL;
+    } else {
+        struct chain_unit *new_head = history->pile->next->next;
+        free(history->pile->next);
+        history->pile->next = new_head;
+        new_head->prev = NULL;
+    }
+    history->count--;
+}
+/**
+ * Calculate the average RSSI, update the queue
+ */
+int calculate_average_rssi(struct wifi_rssi_history *history, int new_rssi) {
+    int sum = 0;
+    if (history->count == history->max_size) {
+        dequeue_rssi(history);
+    }
+    enqueue_rssi(history, new_rssi);
+    struct chain_unit *current = history->pile->next;
+    while (current != NULL) {
+        sum += current->rssi;
+        current = current->next;
+    }
+    return sum / history->count;
+}
 
 static void wifi_poll_task(void *pvParameters)
 {
+    // init rssi history queue
+    struct wifi_rssi_history *history = init_rssi_queue();
     while (1) {
         if (wifi_connected) {
             wifi_ap_record_t ap_info;
             if (esp_wifi_sta_get_ap_info(&ap_info) == ESP_OK) {
-                display_update_wifi(ap_info.rssi, wifi_ip_str);
+                int avg=calculate_average_rssi(history, ap_info.rssi);
+                display_update_wifi(avg, wifi_ip_str);
             }
         } else {
             display_update_wifi(0, NULL);
@@ -123,7 +199,4 @@ void test_run_wifi(void)
 {
     wifi_init();
     xTaskCreate(wifi_poll_task, "wifi_poll", 4096, NULL, 3, NULL);
-    while (1) {
-        vTaskDelay(pdMS_TO_TICKS(1000));
-    }
 }
