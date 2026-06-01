@@ -217,6 +217,8 @@ void display_lvgl_test_run(void)
 
 static lv_obj_t *sensor_temp_label = NULL;
 static lv_obj_t *sensor_hum_label = NULL;
+static lv_obj_t *wifi_rssi_label = NULL;
+static lv_obj_t *wifi_ip_label = NULL;
 
 void display_update_sensor(int temperature, int humidity)
 {
@@ -225,8 +227,26 @@ void display_update_sensor(int temperature, int humidity)
     }
 
     lvgl_port_lock(0);
-    lv_label_set_text_fmt(sensor_temp_label, "Temperature: %dC", temperature);
+    lv_label_set_text_fmt(sensor_temp_label, "Temp: %dC", temperature);
     lv_label_set_text_fmt(sensor_hum_label, "Humidity: %d%%", humidity);
+    lvgl_port_unlock();
+}
+
+void display_update_wifi(int rssi, const char *ip)
+{
+    if (!wifi_rssi_label || !wifi_ip_label) {
+        return;
+    }
+
+    lvgl_port_lock(0);
+    if (rssi == 0 && ip == NULL) {
+        lv_label_set_text(wifi_rssi_label, "WIFI: --");
+        lv_label_set_text(wifi_ip_label, "IP:--");
+    } else {
+        int pct = (rssi >= -50) ? 100 : (rssi <= -100) ? 0 : 2 * (rssi + 100);
+        lv_label_set_text_fmt(wifi_rssi_label, "WIFI: %d%%", pct);
+        lv_label_set_text_fmt(wifi_ip_label, "IP:%s", ip);
+    }
     lvgl_port_unlock();
 }
 
@@ -265,19 +285,33 @@ static void lvgl_sensor_ui(void)
     lv_style_set_bg_opa(&style_bg, LV_OPA_COVER);
     lv_obj_add_style(scr, &style_bg, LV_STATE_DEFAULT);
 
+    /* WiFi RSSI label */
+    wifi_rssi_label = lv_label_create(scr);
+    lv_obj_set_style_text_font(wifi_rssi_label, &lv_font_unscii_8, 0);
+    lv_obj_set_style_text_color(wifi_rssi_label, lv_color_white(), 0);
+    lv_label_set_text(wifi_rssi_label, "WIFI: --");
+    lv_obj_align(wifi_rssi_label, LV_ALIGN_TOP_LEFT, 0, 5);
+
+    /* WiFi IP label */
+    wifi_ip_label = lv_label_create(scr);
+    lv_obj_set_style_text_font(wifi_ip_label, &lv_font_unscii_8, 0);
+    lv_obj_set_style_text_color(wifi_ip_label, lv_color_white(), 0);
+    lv_label_set_text(wifi_ip_label, "IP:--");
+    lv_obj_align(wifi_ip_label, LV_ALIGN_TOP_LEFT, 0, 20);
+
     /* Temperature label */
     sensor_temp_label = lv_label_create(scr);
     lv_obj_set_style_text_font(sensor_temp_label, &lv_font_unscii_8, 0);
     lv_obj_set_style_text_color(sensor_temp_label, lv_color_white(), 0);
-    lv_label_set_text(sensor_temp_label, "Temperature: --C");
-    lv_obj_align(sensor_temp_label, LV_ALIGN_TOP_LEFT, 0, 5);
+    lv_label_set_text(sensor_temp_label, "Temp: --C");
+    lv_obj_align(sensor_temp_label, LV_ALIGN_TOP_LEFT, 0, 35);
 
     /* Humidity label */
     sensor_hum_label = lv_label_create(scr);
     lv_obj_set_style_text_font(sensor_hum_label, &lv_font_unscii_8, 0);
     lv_obj_set_style_text_color(sensor_hum_label, lv_color_white(), 0);
     lv_label_set_text(sensor_hum_label, "Humidity: --%");
-    lv_obj_align(sensor_hum_label, LV_ALIGN_TOP_LEFT, 0, 20);
+    lv_obj_align(sensor_hum_label, LV_ALIGN_TOP_LEFT, 0, 50);
 
     lvgl_port_unlock();
 

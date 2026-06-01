@@ -66,6 +66,7 @@ esp_err_t display_draw_bitmap(int x, int y, int w, int h, const uint16_t *data);
 void display_test_run(void);
 void display_lvgl_test_run(void);
 void display_update_sensor(int temperature, int humidity);
+void display_update_wifi(int rssi, const char *ip);
 void display_sensor_run(void);
 
 #ifdef __cplusplus

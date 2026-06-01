@@ -6,6 +6,7 @@
 #include <freertos/timers.h>
 #include <dht.h>
 #include "display.h"
+#include "wifi_manager.h"
 
 #define SENSOR_TYPE    DHT_TYPE_DHT11
 #define DHT_GPIO       GPIO_NUM_4
@@ -77,4 +78,5 @@ void app_main(void)
 
     display_sensor_run();
     xTaskCreate(dht_task, "dht_task", configMINIMAL_STACK_SIZE * 3, NULL, 5, NULL);
+    test_run_wifi();
 }
