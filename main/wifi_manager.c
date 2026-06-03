@@ -37,11 +37,6 @@ static esp_err_t http_get_light_status(httpd_req_t *req) {
 
 static esp_err_t http_control_lighton(httpd_req_t *req)
 {
-    if (light_is_on) {
-        const char *resp = "Light is already ON\n";
-        httpd_resp_send(req, resp, strlen(resp));
-        return ESP_OK;
-    }
     light_on();
     light_is_on = true;
     const char *resp = "Light turned ON\n";
@@ -51,11 +46,6 @@ static esp_err_t http_control_lighton(httpd_req_t *req)
 
 static esp_err_t http_control_lightoff(httpd_req_t *req)
 {
-    if (!light_is_on) {
-        const char *resp = "Light is already OFF\n";
-        httpd_resp_send(req, resp, strlen(resp));
-        return ESP_OK;
-    }
     light_off();
     light_is_on = false;
     const char *resp = "Light turned OFF\n";
