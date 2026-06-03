@@ -9,6 +9,7 @@
 #include "freertos/task.h"
 #include "nvs_flash.h"
 #include <string.h>
+#include <servo.h>
 
 static const char *TAG = "wifi_manager";
 
@@ -16,12 +17,28 @@ static char wifi_ip_str[16] = {0};
 static bool wifi_connected = false;
 
 /* --- HTTP server --- */
-static esp_err_t http_handler(httpd_req_t *req)
+static esp_err_t http_handler_test(httpd_req_t *req)
 {
     ESP_LOGI(TAG, "HTTP request: %s %s", http_method_str(req->method), req->uri);
     const char *resp = "OK\n";
     httpd_resp_send(req, resp, strlen(resp));
     ESP_LOGI(TAG, "HTTP response responded.");
+    return ESP_OK;
+}
+
+static esp_err_t http_control_lighton(httpd_req_t *req)
+{
+    light_on();
+    const char *resp = "Light turned ON\n";
+    httpd_resp_send(req, resp, strlen(resp));
+    return ESP_OK;
+}
+
+static esp_err_t http_control_lightoff(httpd_req_t *req)
+{
+    light_off();
+    const char *resp = "Light turned OFF\n";
+    httpd_resp_send(req, resp, strlen(resp));
     return ESP_OK;
 }
 
@@ -32,12 +49,24 @@ static void http_server_start(void)
 
     httpd_handle_t server = NULL;
     if (httpd_start(&server, &config) == ESP_OK) {
-        httpd_uri_t uri = {
+        httpd_uri_t test = {
             .uri = "/",
             .method = HTTP_GET,
-            .handler = http_handler,
+            .handler = http_handler_test,
         };
-        httpd_register_uri_handler(server, &uri);
+        httpd_uri_t lighton = {
+            .uri = "/light/on",
+            .method = HTTP_GET,
+            .handler = http_control_lighton,
+        };
+        httpd_uri_t lightoff = {
+            .uri = "/light/off",
+            .method = HTTP_GET,
+            .handler = http_control_lightoff,
+        };
+        httpd_register_uri_handler(server, &test);
+        httpd_register_uri_handler(server, &lighton);
+        httpd_register_uri_handler(server, &lightoff);
         ESP_LOGI(TAG, "HTTP server started on port 8000");
     } else {
         ESP_LOGE(TAG, "HTTP server start failed");
