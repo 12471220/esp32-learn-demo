@@ -15,20 +15,35 @@ static const char *TAG = "wifi_manager";
 
 static char wifi_ip_str[16] = {0};
 static bool wifi_connected = false;
+static bool light_is_on = false;
 
 /* --- HTTP server --- */
 static esp_err_t http_handler_test(httpd_req_t *req)
 {
     ESP_LOGI(TAG, "HTTP request: %s %s", http_method_str(req->method), req->uri);
-    const char *resp = "OK\n";
+    const char *resp = "http server is on! Available endpoints:\n\
+    GET /light/status - get current light status\n\
+    GET /light/on - turn on the light\n\
+    GET /light/off - turn off the light\n";
     httpd_resp_send(req, resp, strlen(resp));
     ESP_LOGI(TAG, "HTTP response responded.");
+    return ESP_OK;
+}
+static esp_err_t http_get_light_status(httpd_req_t *req) {
+    const char *resp = light_is_on ? "ON\n" : "OFF\n";
+    httpd_resp_send(req, resp, strlen(resp));
     return ESP_OK;
 }
 
 static esp_err_t http_control_lighton(httpd_req_t *req)
 {
+    if (light_is_on) {
+        const char *resp = "Light is already ON\n";
+        httpd_resp_send(req, resp, strlen(resp));
+        return ESP_OK;
+    }
     light_on();
+    light_is_on = true;
     const char *resp = "Light turned ON\n";
     httpd_resp_send(req, resp, strlen(resp));
     return ESP_OK;
@@ -36,7 +51,13 @@ static esp_err_t http_control_lighton(httpd_req_t *req)
 
 static esp_err_t http_control_lightoff(httpd_req_t *req)
 {
+    if (!light_is_on) {
+        const char *resp = "Light is already OFF\n";
+        httpd_resp_send(req, resp, strlen(resp));
+        return ESP_OK;
+    }
     light_off();
+    light_is_on = false;
     const char *resp = "Light turned OFF\n";
     httpd_resp_send(req, resp, strlen(resp));
     return ESP_OK;
@@ -54,6 +75,11 @@ static void http_server_start(void)
             .method = HTTP_GET,
             .handler = http_handler_test,
         };
+        httpd_uri_t lightstatus = {
+            .uri = "/light/status",
+            .method = HTTP_GET,
+            .handler = http_get_light_status,
+        };
         httpd_uri_t lighton = {
             .uri = "/light/on",
             .method = HTTP_GET,
@@ -65,6 +91,7 @@ static void http_server_start(void)
             .handler = http_control_lightoff,
         };
         httpd_register_uri_handler(server, &test);
+        httpd_register_uri_handler(server, &lightstatus);
         httpd_register_uri_handler(server, &lighton);
         httpd_register_uri_handler(server, &lightoff);
         ESP_LOGI(TAG, "HTTP server started on port 8000");

@@ -47,7 +47,7 @@ esp_err_t servo_rotate(int rotation)
     // duty = 0.5ms + (rotation / 180) * 2ms, in 16-bit ticks (1ms ≈ 3277)
     uint32_t duty = 1638 + (rotation * 6554) / 180;
 
-    ESP_LOGW(TAG, "rotate %d° -> duty %" PRIu32, rotation, duty);
+    ESP_LOGI(TAG, "rotate %d° -> duty %" PRIu32, rotation, duty);
 
     ESP_RETURN_ON_ERROR(ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_1, duty),
                         TAG, "set duty failed");
@@ -56,7 +56,7 @@ esp_err_t servo_rotate(int rotation)
 
 esp_err_t servo_stop(void)
 {
-    ESP_LOGW(TAG, "stop — duty set to 0");
+    ESP_LOGI(TAG, "stop — duty set to 0");
     ESP_RETURN_ON_ERROR(ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_1, 0),
                         TAG, "set duty failed");
     return ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_1);
