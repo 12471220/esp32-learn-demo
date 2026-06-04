@@ -37,18 +37,27 @@ static esp_err_t http_get_light_status(httpd_req_t *req) {
 
 static esp_err_t http_control_lighton(httpd_req_t *req)
 {
-    light_on();
+    // Enqueue the movement to the servo task — non-blocking.
+    if (servo_request(SERVO_CMD_LIGHT_ON) != ESP_OK) {
+        const char *resp = "ERROR: servo busy\n";
+        httpd_resp_send(req, resp, strlen(resp));
+        return ESP_FAIL;
+    }
     light_is_on = true;
-    const char *resp = "Light turned ON\n";
+    const char *resp = "Light turning ON\n";
     httpd_resp_send(req, resp, strlen(resp));
     return ESP_OK;
 }
 
 static esp_err_t http_control_lightoff(httpd_req_t *req)
 {
-    light_off();
+    if (servo_request(SERVO_CMD_LIGHT_OFF) != ESP_OK) {
+        const char *resp = "ERROR: servo busy\n";
+        httpd_resp_send(req, resp, strlen(resp));
+        return ESP_FAIL;
+    }
     light_is_on = false;
-    const char *resp = "Light turned OFF\n";
+    const char *resp = "Light turning OFF\n";
     httpd_resp_send(req, resp, strlen(resp));
     return ESP_OK;
 }

@@ -49,7 +49,7 @@ void dht_task(void *pvParameters) {
         if (dht_read_data(SENSOR_TYPE, DHT_GPIO, &humidity, &temperature) == ESP_OK) {
             humidity /= 10;
             temperature /= 10;
-            ESP_LOGI(TAG, "Humidity: %d%% Temp: %dC", humidity, temperature);
+            // ESP_LOGI(TAG, "Humidity: %d%% Temp: %dC", humidity, temperature);
 
             if (temperature > 33 || humidity > 70) {
                 alarm_start();
@@ -68,7 +68,11 @@ void dht_task(void *pvParameters) {
 }
 
 void app_main(void) {
-    esp_log_level_set("*", ESP_LOG_WARN);
+    esp_log_level_set("*", ESP_LOG_INFO);
+
+    /* One-time servo init + async task */
+    ESP_ERROR_CHECK(servo_init());
+    servo_task_start();
 
     display_sensor_run();
     xTaskCreate(dht_task, "dht_task", configMINIMAL_STACK_SIZE * 3, NULL, 5, NULL);
