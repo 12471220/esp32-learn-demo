@@ -44,6 +44,8 @@ ESP32 + ST7735 130×130 LCD 多功能开发演示项目。
 - 舵机命令队列（FreeRTOS Queue）确保并发 HTTP 请求串行化
 - `servo_task` 栈空间 5120 字节，避免深层调用栈溢出
 - 启用 `CONFIG_LV_SPRINTF_USE_FLOAT`，修复 LVGL 标签浮点数显示为 "f" 的问题
+- 移除告警定时器，`alarm_start`/`alarm_stop` 直接控制 LED，消除无意义的 500ms 周期回调
+- `led_init` 移入 `dht_task`，初始化靠近使用点
 
 ## 源代码结构
 
