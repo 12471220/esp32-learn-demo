@@ -69,10 +69,10 @@ void app_main(void) {
     esp_log_level_set("*", ESP_LOG_INFO);
 
     /* One-time servo init + async task */
-    // ESP_ERROR_CHECK(servo_init());
-    // servo_task_start();
+    ESP_ERROR_CHECK(servo_init());
+    servo_task_start();
 
     display_sensor_run();
     xTaskCreate(dht_task, "dht_task", configMINIMAL_STACK_SIZE * 3, NULL, 5, NULL);
-    // test_run_wifi();
+    wifi_run();
 }

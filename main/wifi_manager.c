@@ -214,7 +214,7 @@ void wifi_init(void)
     ESP_LOGI(TAG, "connecting to SSID: %s", ESP_WIFI_SSID);
 }
 
-void test_run_wifi(void)
+void wifi_run(void)
 {
     wifi_init();
     xTaskCreate(wifi_poll_task, "wifi_poll", 4096, NULL, 3, NULL);

@@ -9,7 +9,7 @@ extern "C" {
 #define ESP_WIFI_CHANNEL 1
 #define MAX_STA_CONN     2
 
-void test_run_wifi(void);
+void wifi_run(void);
 
 #ifdef __cplusplus
 }
