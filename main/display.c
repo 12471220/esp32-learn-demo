@@ -220,15 +220,15 @@ static lv_obj_t *sensor_hum_label = NULL;
 static lv_obj_t *wifi_rssi_label = NULL;
 static lv_obj_t *wifi_ip_label = NULL;
 
-void display_update_sensor(int temperature, int humidity)
+void display_update_sensor(float temperature, float humidity)
 {
     if (!sensor_temp_label || !sensor_hum_label) {
         return;
     }
 
     lvgl_port_lock(0);
-    lv_label_set_text_fmt(sensor_temp_label, "Temp: %dC", temperature);
-    lv_label_set_text_fmt(sensor_hum_label, "Humidity: %d%%", humidity);
+    lv_label_set_text_fmt(sensor_temp_label, "Temp: %.1fC", temperature);
+    lv_label_set_text_fmt(sensor_hum_label, "Humidity: %.1f%%", humidity);
     lvgl_port_unlock();
 }
 

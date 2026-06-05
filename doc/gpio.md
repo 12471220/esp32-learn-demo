@@ -2,7 +2,7 @@
 
 | GPIO | 定义 | 功能 | 文件 |
 |---|---|---|---|
-| 4 | `DHT_GPIO` | DHT11 温湿度传感器 | `esp32-learn-demo.c` |
+| 4 | `DHT_GPIO` | DHT22 温湿度传感器 | `esp32-learn-demo.c` |
 | 13 | `SERVO_GPIO` | 舵机 PWM 控制 | `servo.h` |
 | 16 | `beep_gpio` | 蜂鸣器 | `led_light.h` |
 | 18 | `DISPLAY_SCLK` | ST7735 SPI 时钟 | `display.h` |

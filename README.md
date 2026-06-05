@@ -10,7 +10,7 @@ ESP32 + ST7735 130×130 LCD 多功能开发演示项目。
 |---|---|---|
 | LED 控制 | `led_light.c/h` | 三色 LED（R/G/B）+ 蜂鸣器，参数化 GPIO，支持闪烁 |
 | 显示驱动 | `display.c/h` | ST7735 SPI，LEDC PWM 背光，LVGL 渲染 |
-| DHT11 传感器 | `esp32-learn-demo.c` | 每 2s 读取温湿度，超阈值触发声光告警 |
+| DHT22 传感器 | `esp32-learn-demo.c` | 每 2s 读取温湿度，超阈值触发声光告警 |
 | WiFi STA | `wifi_manager.c/h` | 自动连接、断线重连、RSSI 环形数组平滑 |
 | HTTP 服务 | `wifi_manager.c` | 端口 8000，GET / 回 "OK"，/light/on /light/off 控制舵机 |
 | 舵机控制 | `servo.c/h` | LEDC PWM 50Hz，角度旋转 0-180°，命令队列 + FreeRTOS 任务异步执行 |
@@ -43,6 +43,7 @@ ESP32 + ST7735 130×130 LCD 多功能开发演示项目。
 - PWM 背光亮度可调 0-100%
 - 舵机命令队列（FreeRTOS Queue）确保并发 HTTP 请求串行化
 - `servo_task` 栈空间 5120 字节，避免深层调用栈溢出
+- 启用 `CONFIG_LV_SPRINTF_USE_FLOAT`，修复 LVGL 标签浮点数显示为 "f" 的问题
 
 ## 源代码结构
 

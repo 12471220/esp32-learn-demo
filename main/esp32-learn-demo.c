@@ -9,9 +9,9 @@
 #include "wifi_manager.h"
 #include "servo.h"
 
-#define SENSOR_TYPE    DHT_TYPE_DHT11
+#define SENSOR_TYPE    DHT_TYPE_AM2301
 #define DHT_GPIO       GPIO_NUM_4
-#define TAG            "DHT11"
+#define TAG            "DHT22"
 
 static TimerHandle_t alarm_timer = NULL;
 
@@ -43,13 +43,11 @@ static void alarm_stop(void) {
 }
 
 void dht_task(void *pvParameters) {
-    int16_t temperature, humidity;
+    float temperature, humidity;
 
     while (1) {
-        if (dht_read_data(SENSOR_TYPE, DHT_GPIO, &humidity, &temperature) == ESP_OK) {
-            humidity /= 10;
-            temperature /= 10;
-            // ESP_LOGI(TAG, "Humidity: %d%% Temp: %dC", humidity, temperature);
+        if (dht_read_float_data(SENSOR_TYPE, DHT_GPIO, &humidity, &temperature) == ESP_OK) {
+            ESP_LOGI(TAG, "Humidity: %.1f%% Temperature: %.1f°C", humidity, temperature);
 
             if (temperature > 33 || humidity > 70) {
                 alarm_start();
@@ -71,10 +69,10 @@ void app_main(void) {
     esp_log_level_set("*", ESP_LOG_INFO);
 
     /* One-time servo init + async task */
-    ESP_ERROR_CHECK(servo_init());
-    servo_task_start();
+    // ESP_ERROR_CHECK(servo_init());
+    // servo_task_start();
 
     display_sensor_run();
     xTaskCreate(dht_task, "dht_task", configMINIMAL_STACK_SIZE * 3, NULL, 5, NULL);
-    test_run_wifi();
+    // test_run_wifi();
 }
